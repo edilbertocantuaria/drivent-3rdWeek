@@ -11,16 +11,13 @@ export async function createFakeHotel() {
   });
 }
 
-export async function createFakeRoom() {
-  const capacity = Math.round(faker.random.number({ min: 1, max: 4 }));
-
-  const roomId = Math.round(faker.random.number({ min: 1, max: 1000 }));
+export async function createFakeRoom(hotelId: number) {
 
   return prisma.room.create({
     data: {
       name: "suite standard",
-      capacity: capacity,
-      hotelId: roomId
+      capacity: 3,
+      hotelId: hotelId
     }
   })
 }

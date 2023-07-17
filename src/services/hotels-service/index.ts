@@ -1,6 +1,6 @@
 import { Hotel } from '@prisma/client';
 import { notFoundError } from '@/errors';
-import {notListHotelsError} from '@/errors'
+import { notListHotelsError } from '@/errors'
 import hotelsRepository from '@/repositories/hotel-repository';
 import enrollmentRepository from '@/repositories/enrollment-repository';
 import ticketsRepository from '@/repositories/tickets-repository';
@@ -18,12 +18,12 @@ async function isUserEnrolledAndPaidTicket(userId: number) {
 
 async function getHotels(userId: number): Promise<Hotel[]> {
   await isUserEnrolledAndPaidTicket(userId);
-  
+
   const hotels = await hotelsRepository.findHotels()
 
   if (!hotels) throw notFoundError();
 
-  console.log(hotels);
+  //console.log(hotels);
   return hotels;
 }
 
