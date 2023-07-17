@@ -1,29 +1,42 @@
 import { Address, Enrollment } from '@prisma/client';
 import { request } from '@/utils/request';
-import { notFoundError } from '@/errors';
+import httpStatus from 'http-status';
+import { invalidDataError, notFoundError } from '@/errors';
 import addressRepository, { CreateAddressParams } from '@/repositories/address-repository';
 import enrollmentRepository, { CreateEnrollmentParams } from '@/repositories/enrollment-repository';
 import { exclude } from '@/utils/prisma-utils';
-import { AddressEnrollment } from '@/protocols';
+import { isValid } from '@brazilian-utils/brazilian-utils/dist/utilities/inscricao-estadual';
+import { isValidEmail } from '@brazilian-utils/brazilian-utils';
+import { error } from 'console';
 
-async function getAddressFromCEP(cep: string): Promise<AddressEnrollment> {
+
+async function getAddressFromCEP(cep: string) {
+  //console.log("service");
+  //console.log(cep)
+
   const result = await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`);
 
   if (!result.data || result.data.erro) {
     throw notFoundError();
   }
 
-  const { bairro, localidade, uf, complemento, logradouro } = result.data;
+  const formattedResult: {
+    logradouro: string,
+    complemento: string,
+    bairro: string,
+    cidade: string,
+    uf: string
+  } = {
+    logradouro: (result.data.logradouro === undefined ? '' : result.data.logradouro),
+    complemento: (result.data.complemento === undefined ? '' : result.data.complemento),
+    bairro: (result.data.bairro === undefined ? '' : result.data.bairro),
+    cidade: (result.data.localidade === undefined ? '' : result.data.localidade),
+    uf: (result.data.uf === undefined ? '' : result.data.uf)
+  }
 
-  const address: AddressEnrollment = {
-    bairro,
-    cidade: localidade,
-    uf,
-    complemento,
-    logradouro,
-  };
+  //console.log(formattedResult);
 
-  return address;
+  return formattedResult;
 }
 
 async function getOneWithAddressByUserId(userId: number): Promise<GetOneWithAddressByUserIdResult> {
@@ -50,11 +63,18 @@ function getFirstAddress(firstAddress: Address): GetAddressResult {
 
 type GetAddressResult = Omit<Address, 'createdAt' | 'updatedAt' | 'enrollmentId'>;
 
+
 async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollmentWithAddress) {
   const enrollment = exclude(params, 'address');
   const address = getAddressForUpsert(params.address);
+  //console.log(address.cep)
+  const cep = address.cep.replace("-", "")
 
-  await getAddressFromCEP(address.cep);
+  const result = await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`);
+  if (result.status !== 200 || result.data.erro) {
+    throw notFoundError();
+  };
+
 
   const newEnrollment = await enrollmentRepository.upsert(params.userId, enrollment, exclude(enrollment, 'userId'));
 
