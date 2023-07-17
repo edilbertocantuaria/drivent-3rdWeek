@@ -1,5 +1,6 @@
 import { Hotel } from '@prisma/client';
 import { notFoundError } from '@/errors';
+import {notListHotelsError} from '@/errors'
 import hotelsRepository from '@/repositories/hotel-repository';
 import enrollmentRepository from '@/repositories/enrollment-repository';
 import ticketsRepository from '@/repositories/tickets-repository';
@@ -11,12 +12,13 @@ async function isUserEnrolledAndPaidTicket(userId: number) {
 
   const ticket = await ticketsRepository.findTicketByEnrollmentId(enrollment.id)
 
-  if (!ticket || ticket.status === "RESERVED" || ticket.TicketType.isRemote || !ticket.TicketType.includesHotel) throw notFoundError();
+  if (!ticket || ticket.status === "RESERVED" || ticket.TicketType.isRemote || !ticket.TicketType.includesHotel) throw notListHotelsError();
 
 }
 
 async function getHotels(userId: number): Promise<Hotel[]> {
   await isUserEnrolledAndPaidTicket(userId);
+  
   const hotels = await hotelsRepository.findHotels()
 
   if (!hotels) throw notFoundError();
