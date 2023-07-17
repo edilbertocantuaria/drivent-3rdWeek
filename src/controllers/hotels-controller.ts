@@ -8,11 +8,11 @@ export async function getHotels(req: AuthenticatedRequest, res: Response) {
   try {
     const hotels = await hotelsService.getHotels(userId);
 
+    if (!hotels) return res.status(httpStatus.NOT_FOUND)
+
     return res.status(httpStatus.OK).send(hotels);
   } catch (error) {
-    if (error.name === 'NotFoundError') return res.sendStatus(httpStatus.NO_CONTENT);
-
-    if (error.name === 'NotListHotelsError') return res.sendStatus(httpStatus.PAYMENT_REQUIRED);
+    if (error.name === 'NotFoundError' || error.name === 'NotListHotelsError') return res.sendStatus(httpStatus.NOT_FOUND);
 
     return res.sendStatus(httpStatus.BAD_REQUEST)
   }
@@ -28,9 +28,8 @@ export async function getHotelsById(req: AuthenticatedRequest, res: Response) {
     const hotel = await hotelsService.getHotelsById(userId, Number(hotelId));
     res.status(httpStatus.OK).send(hotel);
   } catch (error) {
-    if (error.name === 'NotFoundError') return res.sendStatus(httpStatus.NO_CONTENT);
+    if (error.name === 'NotFoundError' || error.name === 'NotListHotelsError') return res.sendStatus(httpStatus.NOT_FOUND);
 
-    if (error.name === 'NotListHotelsError') return res.sendStatus(httpStatus.PAYMENT_REQUIRED);
 
     return res.sendStatus(httpStatus.BAD_REQUEST)
   }
