@@ -1,8 +1,5 @@
 import faker from '@faker-js/faker';
-
 import { Hotel} from '@prisma/client';
-
-import { createUser } from './users-factory';
 import { prisma } from '@/config';
 
 export async function createEnrollmentWithAddress(user?: User) {
